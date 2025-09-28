@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Копировать в буфер</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg,#0f172a,#071028);
+      color: #fff;
+    }
+    .card {
+      background: rgba(255,255,255,0.04);
+      border-radius: 12px;
+      padding: 28px;
+      width: 95%;
+      max-width: 420px;
+      text-align: center;
+      box-shadow: 0 6px 24px rgba(2,6,23,0.6);
+    }
+    .code {
+      font-family: "Courier New", monospace;
+      font-size: 1.2rem;
+      letter-spacing: .12rem;
+      background: rgba(0,0,0,0.25);
+      padding: 10px 14px;
+      border-radius: 8px;
+      display: inline-block;
+      margin-bottom: 14px;
+      user-select: all;
+    }
+    button {
+      appearance: none;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+    }
+    .ok { color: #8ef7a6; margin-top: 12px; }
+    .err { color: #ffb3b3; margin-top: 12px; }
+    .hint { font-size: .85rem; color: #cbd5e1; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="card" role="main" aria-live="polite">
+    <div class="code" id="theText">fnf6utdr5f</div>
+    <div>
+      <button id="copyBtn">Копировать</button>
+    </div>
+    <div class="hint" id="hint">Идет попытка автокопирования...</div>
+    <div id="result" aria-hidden="true"></div>
+  </div>
+
+  <script>
+    (function(){
+      const text = "fnf6utdr5f";
+      const btn = document.getElementById('copyBtn');
+      const hint = document.getElementById('hint');
+      const result = document.getElementById('result');
+
+      async function tryAutoCopy() {
+        // Попытка использовать современный API
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+            onSuccess(true);
+            return;
+          }
+        } catch (e) {
+          // продолжим к следующему варианту
+        }
+
+        // Фолбэк: выделить текст и выполнить document.execCommand (иногда срабатывает)
+        try {
+          const el = document.createElement('textarea');
+          el.value = text;
+          // скрываем элемент, но должен быть в DOM для выделения
+          el.style.position = 'fixed';
+          el.style.left = '-9999px';
+          document.body.appendChild(el);
+          el.select();
+          const ok = document.execCommand('copy');
+          document.body.removeChild(el);
+          if (ok) { onSuccess(false); return; }
+        } catch (e) {
+          // не получилось
+        }
+
+        // Если ничего не сработало — показать подсказку пользователю
+        hint.textContent = "Автокопирование не получилось. Нажмите кнопку «Копировать».";
+      }
+
+      function onSuccess(automatic) {
+        hint.textContent = automatic ? "Текст автоматически скопирован в буфер." : "Текст скопирован в буфер.";
+        result.className = "ok";
+        result.textContent = "Скопировано!";
+        // Попробуем аккуратно закрыть окно (в некоторых окружениях закроется)
+        try { setTimeout(()=>window.close(), 700); } catch(e){}
+      }
+
+      async function manualCopy() {
+        // Сначала пробуем современный API (требует жест пользователя — OK при клике)
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+            onSuccess(false);
+            return;
+          }
+        } catch (e) {
+          // fallthrough
+        }
+        // fallback: textarea + execCommand
+        try {
+          const el = document.createElement('textarea');
+          el.value = text;
+          el.style.position = 'fixed';
+          el.style.left = '-9999px';
+          document.body.appendChild(el);
+          el.select();
+          const ok = document.execCommand('copy');
+          document.body.removeChild(el);
+          if (ok) { onSuccess(false); return; }
+        } catch (e) {}
+        result.className = "err";
+        result.textContent = "Не удалось скопировать автоматически. Выделите текст и скопируйте вручную.";
+      }
+
+      btn.addEventListener('click', manualCopy);
+
+      // Попытка автокопирования при загрузке
+      window.addEventListener('load', () => {
+        // небольшая задержка даёт встроенному браузеру время для инициализации
+        setTimeout(tryAutoCopy, 150);
+      });
+    })();
+  </script>
+</body>
+</html>
