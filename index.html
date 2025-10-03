@@ -52,7 +52,7 @@
 </head>
 <body>
   <div class="card" role="main" aria-live="polite">
-    <div class="code" id="theText">fnf6utdr5f</div>
+    <div class="code" id="theText">po4pwo8syc</div>
     <div>
       <button id="copyBtn">Копировать</button>
     </div>
@@ -62,28 +62,23 @@
 
   <script>
     (function(){
-      const text = "fnf6utdr5f";
+      const text = "po4pwo8syc";
       const btn = document.getElementById('copyBtn');
       const hint = document.getElementById('hint');
       const result = document.getElementById('result');
 
       async function tryAutoCopy() {
-        // Попытка использовать современный API
         try {
           if (navigator.clipboard && navigator.clipboard.writeText) {
             await navigator.clipboard.writeText(text);
             onSuccess(true);
             return;
           }
-        } catch (e) {
-          // продолжим к следующему варианту
-        }
+        } catch (e) {}
 
-        // Фолбэк: выделить текст и выполнить document.execCommand (иногда срабатывает)
         try {
           const el = document.createElement('textarea');
           el.value = text;
-          // скрываем элемент, но должен быть в DOM для выделения
           el.style.position = 'fixed';
           el.style.left = '-9999px';
           document.body.appendChild(el);
@@ -91,11 +86,8 @@
           const ok = document.execCommand('copy');
           document.body.removeChild(el);
           if (ok) { onSuccess(false); return; }
-        } catch (e) {
-          // не получилось
-        }
+        } catch (e) {}
 
-        // Если ничего не сработало — показать подсказку пользователю
         hint.textContent = "Автокопирование не получилось. Нажмите кнопку «Копировать».";
       }
 
@@ -103,22 +95,18 @@
         hint.textContent = automatic ? "Текст автоматически скопирован в буфер." : "Текст скопирован в буфер.";
         result.className = "ok";
         result.textContent = "Скопировано!";
-        // Попробуем аккуратно закрыть окно (в некоторых окружениях закроется)
         try { setTimeout(()=>window.close(), 700); } catch(e){}
       }
 
       async function manualCopy() {
-        // Сначала пробуем современный API (требует жест пользователя — OK при клике)
         try {
           if (navigator.clipboard && navigator.clipboard.writeText) {
             await navigator.clipboard.writeText(text);
             onSuccess(false);
             return;
           }
-        } catch (e) {
-          // fallthrough
-        }
-        // fallback: textarea + execCommand
+        } catch (e) {}
+
         try {
           const el = document.createElement('textarea');
           el.value = text;
@@ -136,9 +124,7 @@
 
       btn.addEventListener('click', manualCopy);
 
-      // Попытка автокопирования при загрузке
       window.addEventListener('load', () => {
-        // небольшая задержка даёт встроенному браузеру время для инициализации
         setTimeout(tryAutoCopy, 150);
       });
     })();
